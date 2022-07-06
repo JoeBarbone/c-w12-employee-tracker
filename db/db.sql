@@ -1,0 +1,3 @@
+DROP DATABASE IF EXISTS db_emp;
+CREATE DATABASE db_emp;
+USE db_emp;
