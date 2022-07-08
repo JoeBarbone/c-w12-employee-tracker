@@ -29,8 +29,8 @@ CREATE TABLE tbl_emp (
     last_name VARCHAR(30),
     role_id INT,
     manager_id INT,
-    CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES tbl_role(id)
-
+    CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES tbl_role(id),
+    CONSTRAINT fk_manager FOREIGN KEY (manager_id) REFERENCES tbl_emp(id)
 );
 
 

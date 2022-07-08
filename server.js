@@ -3,7 +3,6 @@ const express = require("express");
 const inquirer = require("inquirer");
 const cTable = require("console.table");
 
-
 //console.clear();
 
 console.log(` _______  __   __  _______  ___      _______  __   __  _______  _______ 
@@ -78,7 +77,7 @@ function runSwitch(myMenuChoice) {
                         return addEmployee();
 
                 case "Update an Employee Role":
-                        return addEmployeeRole();
+                        return updateEmployeeRole();
                 
                 case "Exit":
                         process.exit();
@@ -129,13 +128,15 @@ const viewAllEmployees = () => {
 
         
 
-        const sql = `SELECT tbl_emp.id, tbl_emp.first_name, tbl_emp.last_name, tbl_role.title AS title, tbl_dept.dept_name AS department, tbl_role.salary AS salary
+        const sql = `SELECT tbl_emp.id, tbl_emp.first_name, tbl_emp.last_name, tbl_role.title AS title, tbl_dept.dept_name AS department, tbl_role.salary AS salary, CONCAT(manager.first_name, " ", manager.last_name) AS manager 
                 FROM tbl_emp 
                 LEFT JOIN tbl_role 
                 ON tbl_emp.role_id = tbl_role.id 
                 LEFT JOIN tbl_dept 
-                ON tbl_role.dept_id = tbl_dept.id;`;
-
+                ON tbl_role.dept_id = tbl_dept.id
+                LEFT JOIN tbl_emp manager
+                ON manager.id = tbl_emp.manager_id`;
+                
         db.query(sql, function (err, results) {
                 if (err) throw err;
                 
@@ -196,11 +197,6 @@ const addRole = () => {
                         message: "Salary of new role:",
                         type: "input"
                 },
-                // {
-                //         name: "dept_id",
-                //         message: "Department ID of new role:",
-                //         type: "input"
-                // },
                 {
                         name: "dept_name",
                         message: "Select department of new role",
@@ -332,6 +328,49 @@ const addEmployee = () => {
 };
 
 
+const updateEmployeeRole = () => {
+
+
+        const empArr = getEmployeeList();       
+        const roleArr = getRoleList(); 
+        
+        inquirer.prompt([
+                        
+                {
+                        name: "employee",
+                        message: "Employee to update:",
+                        type: "list",
+                        choices: empArr
+                },
+                {
+                        name: "role",
+                        message: "Employee's new role:",
+                        type: "list",
+                        choices: roleArr
+                }
+
+       ])
+       .then(function (response) {
+
+                const sqlUpdateRole = `UPDATE tbl_emp SET role_id = (?) WHERE CONCAT(first_name, " ", last_name) = (?)`;
+                
+                const params = (response.role, response.employee);
+                
+
+                db.query(sqlUpdateRole, params, function(err) {
+
+                        if (err) throw err;
+                        
+                        console.log();
+
+                }); 
+                
+        });
+        console.log("update role successfully");
+};
+
+
+
 const getDeptList = () => {
 
         const sql = `SELECT dept_name FROM tbl_dept`;
@@ -385,6 +424,26 @@ const getManagerList = () => {
                 };
                 
                 tempArr.unshift("none");
+        });
+
+        return tempArr;        
+
+};
+
+
+
+const getEmployeeList = () => {
+
+        const sql = `SELECT CONCAT(first_name, " ", last_name) AS employee FROM tbl_emp`;
+        const tempArr = [];
+        db.query(sql, function (err, results) {
+                
+                if (err) throw err;
+                
+                for (let i=0; i < results.length; i++) {
+                        tempArr.push(results[i].employee);
+                };
+        
         });
 
         return tempArr;        
