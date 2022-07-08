@@ -4,7 +4,9 @@ const inquirer = require("inquirer");
 const cTable = require("console.table");
 
 
-//console.clear();
+
+
+console.clear();
 
 console.log(` _______  __   __  _______  ___      _______  __   __  _______  _______ 
 |       ||  |_|  ||       ||   |    |       ||  | |  ||       ||       |
@@ -24,9 +26,6 @@ console.log(` _______  __   __  _______  ___      _______  __   __  _______  ___
 console.log("");
 console.log("");
 console.log("");
-
-
-
 
 const menuChoice = () => {
         
@@ -96,8 +95,6 @@ const viewAllDepts = () => {
                 if (err) throw err;
                 
                 console.table([],results);
-                console.log();
-                console.log();
                 menuChoice();
         });
         
@@ -116,8 +113,6 @@ const viewAllRoles = () => {
                 if (err) throw err;
                 
                 console.table([],results);
-                console.log();
-                console.log();
                 menuChoice();
         });
 
@@ -127,7 +122,7 @@ const viewAllRoles = () => {
 
 const viewAllEmployees = () => {
 
-        
+        console.log("made it to view all roles function");
 
         const sql = `SELECT tbl_emp.id, tbl_emp.first_name, tbl_emp.last_name, tbl_role.title AS title, tbl_dept.dept_name AS department, tbl_role.salary AS salary
                 FROM tbl_emp 
@@ -140,8 +135,6 @@ const viewAllEmployees = () => {
                 if (err) throw err;
                 
                 console.table([],results);
-                console.log();
-                console.log();
                 menuChoice();
         });
         
@@ -150,6 +143,8 @@ const viewAllEmployees = () => {
 
 
 const addDepartment = () => {
+
+        console.log("made it to add department");
 
         inquirer.prompt([
                 {
@@ -162,13 +157,12 @@ const addDepartment = () => {
 
                 const sql = `INSERT INTO tbl_dept (dept_name) VALUES (?)`;
                 const newDept = response.deptName;
-                
-                console.log();
+                console.log(newDept);
 
                 db.query(sql, newDept, function (err) {
                         if (err) throw err;
 
-                        console.log(`New department ${response.deptName} added successfully!`);
+                        console.log("New department added successfully!");
                         console.log();
                         console.log();
                         menuChoice();
@@ -227,12 +221,10 @@ const addRole = () => {
 
                         const newRoleArr = [response.title, response.salary, deptID];
 
-                        console.log();
-
                         db.query(sql, newRoleArr, function (err) {
                                 if (err) throw err;
 
-                                console.log(`New role ${response.title} added successfully!`);
+                                console.log("New Role added successfully!");
                                 console.log();
                                 console.log();
                                 menuChoice();
@@ -250,9 +242,6 @@ const addEmployee = () => {
 
         const roleArr = getRoleList();
         const empArr = getManagerList();
-
-        let roleID = 0;
-        
 
         inquirer.prompt([
                 {
@@ -272,7 +261,7 @@ const addEmployee = () => {
                         choices: roleArr
                 },
                 {
-                        name: "manager_name",
+                        name: "manager_id",
                         message: "New employee manager:",
                         type: "list",
                         choices: empArr
@@ -282,51 +271,45 @@ const addEmployee = () => {
                 
                 const sqlRoleID = `SELECT ID FROM tbl_role WHERE title = (?)`;
                 const sqlRoleIDParams = response.title;
+
+
+                // I need to SELECT ID FROM tbl_role WHERE title = the text title selected from the inquirer list
+                // Then I need to SELECT ID FROM tbl_emp WHERE first_name and last_name = the first&last name selected from the inquirer list
+                // Can I combine those two statements in one or should I break it up into two different queries? 
+                //const sqlRoleID = `SELECT tbl_role.ID, tbl_emp.manager_id FROM tbl_role WHERE title = (?)`;
+                //const sqlRoleIDParams = response.title;
+
+                //const sqlEmpMgrID = `SELECT id FROM tbl_emp WHERE id = (?)`;
+                //const sqlEmpMgrIDParams = response.manager_id;
+                
                 
                 
                 db.query(sqlRoleID, sqlRoleIDParams, function(err, results) {
-                
                         if (err) throw err;
                         
-                        roleID = results[0].ID;
-                        //console.log("roleID in function: " + roleID);
-                        
-                
-                                const sqlEmpMgrID = `SELECT ID FROM tbl_emp WHERE CONCAT(first_name, " ", last_name) = (?)`;
-                                const sqlEmpMgrIDParams = response.manager_name;
-                                                
-                                db.query(sqlEmpMgrID, sqlEmpMgrIDParams, function(err, results) {
-                                        
+                        let roleID = results[0].ID;
+                        let empMgrID = results[0].ID;
 
-                                        if (err) throw err;
-                                        
+                        // const roleID = `INSERT INTO tbl_role (title, salary, dept_id) VALUES (?,?,?)`;
 
-                                        if (!results[0]) {
-                                                empMgrID = null;
-                                        } else {
-                                                empMgrID = results[0].ID;
-                                        }
-                                        
-                                        //console.log("empMgrID in function: " + empMgrID);
-                                       
-                                        
-                                        const sql = `INSERT INTO tbl_emp (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`;
+                        // const newRoleArr = [response.title, response.salary, deptID];
 
-                                        const newEmployeeArr = [response.first_name, response.last_name, roleID, empMgrID];
 
-                                        console.log();
-                                        
-                                        db.query(sql, newEmployeeArr, function (err) {
-                                                if (err) throw err;
+                        const sql = `INSERT INTO tbl_emp (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`;
 
-                                                console.log(`New employee ${response.first_name + " " + response.last_name} added successfully!`);
-                                                console.log();
-                                                console.log();
-                                                menuChoice();
-                                        });                
-                                });
+                        const newEmployeeArr = [response.first_name, response.last_name, roleID, empMgrID];
+
+                        console.log(newEmployeeArr);
+
+                        db.query(sql, newEmployeeArr, function (err) {
+                                if (err) throw err;
+
+                                console.log("New Employee added successfully!");
+                                console.log();
+                                console.log();
+                                menuChoice();
+                        });                
                 });
-                
         });
 
 };
@@ -384,7 +367,6 @@ const getManagerList = () => {
                         tempArr.push(results[i].manager);
                 };
                 
-                tempArr.unshift("none");
         });
 
         return tempArr;        
