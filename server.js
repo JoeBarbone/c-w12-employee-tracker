@@ -2,6 +2,7 @@ const db = require("./db/connection");
 const express = require("express");
 const inquirer = require("inquirer");
 const cTable = require("console.table");
+const { promise } = require("./db/connection");
 
 //console.clear();
 
@@ -328,45 +329,53 @@ const addEmployee = () => {
 };
 
 
-const updateEmployeeRole = () => {
+const updateEmployeeRole =  () => {
 
+        //let empArr =  getEmployeeList();
+        let roleArr = getRoleList();
+        getEmployeeList().then((empArr) => {
+                inquirer.prompt([
 
-        const empArr = getEmployeeList();       
-        const roleArr = getRoleList(); 
+                        {
+                                name: "employee",
+                                message: "Employee to update:",
+                                type: "list",
+                                choices: empArr,
+                        },
+                        {
+                                name: "role",
+                                message: "Employee's new role:",
+                                type: "list",
+                                choices: roleArr,
+                        },
         
-        inquirer.prompt([
+                ])
+        .then(function (response) {
+
+                const sqlGetRoleID = `SELECT ID FROM tbl_role WHERE title = ${response.role}`;
+
+                db.query(sqlGetRoleID, function(err, results) {
+
+                
+                console.log(`results: ${results}`);
+                
+                
+                
+                        const sqlUpdateRole = `UPDATE tbl_emp SET role_id = (?) WHERE CONCAT(first_name, " ", last_name) = (?)`;
+                                
+                        const params = (results.ID, response.employee);
                         
-                {
-                        name: "employee",
-                        message: "Employee to update:",
-                        type: "list",
-                        choices: empArr
-                },
-                {
-                        name: "role",
-                        message: "Employee's new role:",
-                        type: "list",
-                        choices: roleArr
-                }
-
-       ])
-       .then(function (response) {
-
-                const sqlUpdateRole = `UPDATE tbl_emp SET role_id = (?) WHERE CONCAT(first_name, " ", last_name) = (?)`;
+                        db.query(sqlUpdateRole, params, function(err) {
+                                if (err) throw err;
+                                console.log();
+                                console.log("update role successfully");
+                        });
                 
-                const params = (response.role, response.employee);
-                
-
-                db.query(sqlUpdateRole, params, function(err) {
-
-                        if (err) throw err;
-                        
-                        console.log();
-
-                }); 
-                
+                }); // end of sqlGetRoleID
+        
+        }); // end of .then
         });
-        console.log("update role successfully");
+
 };
 
 
@@ -435,19 +444,23 @@ const getManagerList = () => {
 const getEmployeeList = () => {
 
         const sql = `SELECT CONCAT(first_name, " ", last_name) AS employee FROM tbl_emp`;
-        const tempArr = [];
-        db.query(sql, function (err, results) {
-                
-                if (err) throw err;
-                
-                for (let i=0; i < results.length; i++) {
-                        tempArr.push(results[i].employee);
-                };
         
+        let newArray = new Promise((resolve,reject) => {
+
+                db.query(sql, function (err, results) {
+
+                        if (err) throw err;
+                        
+                        //for (let i=0; i < results.length; i++) {
+                        //        tempArr.push(results[i].employee);
+                        //};
+                        //console.log(tempArr);
+                        let tempArr = results.map((res) => res.employee);
+                        resolve(tempArr);
+                });
+
         });
-
-        return tempArr;        
-
+        return newArray;        
 };
 
 
